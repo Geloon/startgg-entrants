@@ -46,11 +46,11 @@ export default function PDFGenerator({ tournamentName, entrants }: Props) {
             const robY = logoY + 8;
 
             // Draw R.O.B. first (behind) or second (front) - User wanted composition
-            // Draw Shield (Logo)
-            doc.addImage(logoBase64, 'JPEG', logoX, logoY, logoSize, logoSize);
-
-            // Draw R.O.B. Standing next to it
+            // Draw R.O.B. Standing next to it (Background)
             doc.addImage(robBase64, 'PNG', robX, robY, robWidth, robHeight);
+
+            // Draw Shield (Logo) (Foreground)
+            doc.addImage(logoBase64, 'JPEG', logoX, logoY, logoSize, logoSize);
 
         } catch (e) {
             console.error("Could not load branding images", e);

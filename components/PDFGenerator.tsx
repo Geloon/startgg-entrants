@@ -13,8 +13,48 @@ interface Props {
 export default function PDFGenerator({ tournamentName, entrants }: Props) {
     const { t } = useLanguage();
 
-    const generatePDF = () => {
+    const getBase64ImageFromUrl = async (imageUrl: string): Promise<string> => {
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    const generatePDF = async () => {
         const doc = new jsPDF();
+
+        // Add Header Images (R.O.B. + Shield)
+        try {
+            // Load images from public folder
+            const logoBase64 = await getBase64ImageFromUrl(window.location.origin + '/logo.jpg');
+            const robBase64 = await getBase64ImageFromUrl(window.location.origin + '/rob_solo.png');
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 14;
+
+            // Positioning variables
+            const logoSize = 25;
+            const robWidth = 22;
+            const robHeight = 22;
+            const logoX = pageWidth - margin - logoSize;
+            const logoY = 10;
+            const robX = logoX - 12; // R.O.B. peeking from behind/left
+            const robY = logoY + 8;
+
+            // Draw R.O.B. first (behind) or second (front) - User wanted composition
+            // Draw Shield (Logo)
+            doc.addImage(logoBase64, 'JPEG', logoX, logoY, logoSize, logoSize);
+
+            // Draw R.O.B. Standing next to it
+            doc.addImage(robBase64, 'PNG', robX, robY, robWidth, robHeight);
+
+        } catch (e) {
+            console.error("Could not load branding images", e);
+        }
 
         // Title
         doc.setFontSize(18);
@@ -38,12 +78,21 @@ export default function PDFGenerator({ tournamentName, entrants }: Props) {
             tableRows.push(entrantData);
         });
 
+        // Add footer text with attribution
+        const pageHeight = doc.internal.pageSize.getHeight();
+
         autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 44,
             styles: { fontSize: 10, cellPadding: 3 },
             headStyles: { fillColor: [178, 34, 34] }, // Red for Murcia
+            didDrawPage: (data) => {
+                // Footer
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text(t.madeWithLove, 14, pageHeight - 10);
+            }
         });
 
         const fileName = `${tournamentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_entrants.pdf`;

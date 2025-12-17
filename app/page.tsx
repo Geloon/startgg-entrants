@@ -1,65 +1,155 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import Image from 'next/image';
+import TokenInput from '@/components/TokenInput';
+import TournamentInput from '@/components/TournamentInput';
+import EntrantList from '@/components/EntrantList';
+import PDFGenerator from '@/components/PDFGenerator';
+import StaffLogin from '@/components/StaffLogin';
+import LanguageToggle from '@/components/LanguageToggle';
+import { LanguageProvider, useLanguage } from '@/components/LanguageContext';
+import { getEntrants, verifyStaffPassword } from '@/app/actions';
+import { Entrant } from '@/lib/startgg';
+
+function HomeContent() {
+  const [token, setToken] = useState('');
+  const [entrants, setEntrants] = useState<Entrant[]>([]);
+  const [tournamentName, setTournamentName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Staff Mode State
+  const [staffPassword, setStaffPassword] = useState('');
+  const [isStaff, setIsStaff] = useState(false);
+
+  const { t } = useLanguage();
+
+  const handleStaffLogin = async (pwd: string) => {
+    const isValid = await verifyStaffPassword(pwd);
+    if (isValid) {
+      setIsStaff(true);
+      setStaffPassword(pwd);
+      setToken(''); // Clear public token if any
+      setError('');
+    } else {
+      setError(t.errorStaffPassword);
+    }
+  };
+
+  const handleSearch = async (url: string) => {
+    if (!token && !isStaff) {
+      setError(t.errorToken);
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setEntrants([]);
+    setTournamentName('');
+
+    // Pass password if staff, otherwise pass token
+    const res = await getEntrants(url, token, isStaff ? staffPassword : undefined);
+
+    if (res.error) {
+      setError(res.error);
+    } else if (res.data) {
+      setTournamentName(res.data.name);
+      setEntrants(res.data.entrants);
+      if (res.data.entrants.length === 0) {
+        setError(t.errorNoEntrants);
+      }
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen pb-12 transition-colors duration-500">
+      <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {/* Language Toggle */}
+        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 z-10">
+          <LanguageToggle />
+        </div>
+
+        {/* Header with Branding */}
+        <div className="flex flex-col items-center justify-center text-center mb-10 mt-8 animate-fade-in relative z-0">
+          <div className="relative w-32 h-32 mb-4 bg-white rounded-full shadow-lg p-2 flex items-center justify-center overflow-hidden border-4 border-red-700 hover:scale-105 transition-transform duration-500">
+            <img src="/logo.jpg" alt="Smash Bros Murcia" className="object-cover w-full h-full rounded-full" />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-red-500 mb-2 drop-shadow-sm tracking-tight">
+            {t.title}
+          </h1>
+          <p className="text-lg font-medium text-red-800/80 dark:text-red-200/80">
+            {t.subtitle}
+          </p>
+        </div>
+
+        {/* Controls */}
+        <div className="glass-panel rounded-2xl shadow-xl p-6 mb-8 ring-1 ring-white/20 animate-fade-in">
+
+          <StaffLogin onLogin={handleStaffLogin} isLoggedIn={isStaff} />
+
+          <div className="grid gap-6">
+            {!isStaff && <TokenInput onTokenChange={setToken} />}
+
+            <div className={`pt-4 ${!isStaff ? 'border-t border-gray-200/50 dark:border-gray-700/50' : ''}`}>
+              <TournamentInput onSearch={handleSearch} loading={loading} />
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-6 p-4 bg-red-50/90 dark:bg-red-900/40 text-red-700 dark:text-red-200 rounded-lg border border-red-200 dark:border-red-800 text-sm animate-pulse flex items-start gap-2">
+              <span className="text-lg">⚠️</span>
+              <span><strong>Error:</strong> {error}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Results */}
+        {entrants.length > 0 && (
+          <div className="space-y-6 animate-fade-in animate-delay-1">
+            <div className="flex flex-col sm:flex-row justify-between items-center glass-panel p-6 rounded-2xl shadow-lg">
+              <div className="mb-4 sm:mb-0 text-center sm:text-left">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{tournamentName}</h2>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">{entrants.length} {t.totalEntrants}</p>
+              </div>
+              <div className="w-full sm:w-auto flex justify-center">
+                <PDFGenerator tournamentName={tournamentName} entrants={entrants} />
+              </div>
+            </div>
+
+            <EntrantList entrants={entrants} />
+          </div>
+        )}
+
+        {/* Empty State / Intro */}
+        {entrants.length === 0 && !loading && !error && (
+          <div className="text-center text-gray-400 mt-12 animate-fade-in animate-delay-1">
+            <p>{t.introText}</p>
+          </div>
+        )}
+
+        {/* Footer Branding */}
+        <div className="mt-16 text-center text-sm text-gray-400 space-y-3 animate-fade-in animate-delay-2">
+          <p>{t.madeWithLove}</p>
+          <a
+            href="https://ko-fi.com/geloon"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#29abe0] hover:bg-[#1f8ebd] text-white rounded-full transition-all shadow-md hover:shadow-lg font-bold text-xs"
+          >
+            <span role="img" aria-label="coffee" className="text-base">☕</span> {t.supportKofi}
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <LanguageProvider>
+      <HomeContent />
+    </LanguageProvider>
   );
 }

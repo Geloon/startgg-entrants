@@ -29,6 +29,7 @@ export const dictionary = {
         errorNoEntrants: 'No entrants found. Check if the tournament has published attendees.',
         errorStaffPassword: 'Incorrect Staff Password.',
         introText: 'Enter a tournament URL to get started.',
+        checkRepo: 'Check code at repo',
     },
     es: {
         title: 'Smash Bros Murcia',
@@ -58,5 +59,6 @@ export const dictionary = {
         errorNoEntrants: 'No se encontraron participantes. Comprueba si el torneo tiene asistentes publicados.',
         errorStaffPassword: 'Contraseña de Staff incorrecta.',
         introText: 'Introduce la URL de un torneo para empezar.',
+        checkRepo: 'Compruébalo en el repo',
     }
 };

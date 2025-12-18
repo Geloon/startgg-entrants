@@ -40,7 +40,7 @@ export default function TokenInput({ onTokenChange }: Props) {
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t.tokenHelp} <a href="https://github.com/Geloon/startgg-entrants" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{t.checkRepo}</a>.
+                {t.tokenHelpStart} <a href="https://start.gg/admin/profile/developer" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{t.tokenHelpLink}</a>{t.tokenHelpEnd} <a href="https://github.com/Geloon/startgg-entrants" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{t.checkRepo}</a>.
             </p>
         </div>
     );

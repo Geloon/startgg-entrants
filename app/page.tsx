@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import TokenInput from '@/components/TokenInput';
 import TournamentInput from '@/components/TournamentInput';
@@ -18,6 +18,7 @@ function HomeContent() {
   const [tournamentName, setTournamentName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [downloadCount, setDownloadCount] = useState(0);
 
   // Staff Mode State
   const [staffPassword, setStaffPassword] = useState('');
@@ -36,6 +37,15 @@ function HomeContent() {
       setError(t.errorStaffPassword);
     }
   };
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.downloads) setDownloadCount(data.downloads);
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   const handleSearch = async (url: string) => {
     if (!token && !isStaff) {
@@ -82,6 +92,7 @@ function HomeContent() {
           <p className="text-lg font-medium text-red-800/80 dark:text-red-200/80">
             {t.subtitle}
           </p>
+
         </div>
 
         {/* Controls */}
@@ -130,16 +141,43 @@ function HomeContent() {
         )}
 
         {/* Footer Branding */}
-        <div className="mt-16 text-center text-sm text-gray-400 space-y-3 animate-fade-in animate-delay-2">
+        <div className="mt-16 text-center text-sm text-gray-400 space-y-6 animate-fade-in animate-delay-2">
           <p>{t.madeWithLove}</p>
-          <a
-            href="https://ko-fi.com/geloon"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#29abe0] hover:bg-[#1f8ebd] text-white rounded-full transition-all shadow-md hover:shadow-lg font-bold text-xs"
-          >
-            <span role="img" aria-label="coffee" className="text-base">☕</span> {t.supportKofi}
-          </a>
+
+          {/* Stats Badge */}
+          <div className="animate-fade-in animate-delay-3 flex justify-center">
+            <div className="inline-flex items-center bg-[#b22222] text-white py-3 rounded-full shadow-lg border-2 border-white/20 hover:scale-105 transition-transform duration-300" style={{ paddingLeft: '32px', paddingRight: '32px' }}>
+              {/* 1. Left Logo */}
+              <div className="w-6 h-6 rounded-full border border-white/30 overflow-hidden shadow-sm mr-12">
+                <Image src="/logo.jpg" alt="Logo" width={24} height={24} className="object-cover" />
+              </div>
+
+              {/* 2. Text Content (Number + Text) */}
+              <div className="flex items-center justify-center">
+                <span className="text-xl font-bold tracking-wide" style={{ marginRight: '20px' }}>{downloadCount.toLocaleString()}</span>
+                <span className="text-xs font-bold uppercase opacity-90 tracking-widest leading-none">
+                  {t.downloadCountText.replace('{count}', '').replace('!', '').replace('¡', '').trim()}
+                </span>
+              </div>
+
+              {/* 3. Right Logo */}
+              <div className="w-6 h-6 rounded-full border border-white/30 overflow-hidden shadow-sm ml-12">
+                <Image src="/logo.jpg" alt="Logo" width={24} height={24} className="object-cover" />
+              </div>
+            </div>
+          </div>
+
+          {/* Ko-fi Button */}
+          <div className="animate-fade-in animate-delay-2 pb-8">
+            <a
+              href="https://ko-fi.com/geloon"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#29abe0] hover:bg-[#1f8ebd] text-white rounded-full transition-all shadow-md hover:shadow-lg font-bold text-xs"
+            >
+              <span role="img" aria-label="coffee" className="text-base">☕</span> {t.supportKofi}
+            </a>
+          </div>
         </div>
       </div>
     </div>

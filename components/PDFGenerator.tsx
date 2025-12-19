@@ -97,6 +97,9 @@ export default function PDFGenerator({ tournamentName, entrants }: Props) {
 
         const fileName = `${tournamentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_entrants.pdf`;
         doc.save(fileName);
+
+        // Increment stats
+        fetch('/api/stats', { method: 'POST' }).catch(err => console.error(err));
     };
 
     return (

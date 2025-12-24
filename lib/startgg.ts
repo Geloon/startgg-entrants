@@ -67,15 +67,18 @@ export async function fetchTournamentEntrants(slug: string, token: string): Prom
 
     tournamentName = data.tournament.name;
     const participants = data.tournament.participants;
-    
+
     if (participants.nodes) {
-        allEntrants = [...allEntrants, ...participants.nodes];
+      allEntrants = [...allEntrants, ...participants.nodes];
     }
-    
+
     totalPages = participants.pageInfo.totalPages;
     page++;
 
   } while (page <= totalPages);
+
+  // Sort entrants alphabetically by gamerTag
+  allEntrants.sort((a, b) => a.gamerTag.localeCompare(b.gamerTag));
 
   return { name: tournamentName, entrants: allEntrants };
 }
@@ -84,11 +87,11 @@ export function extractSlug(url: string): string | null {
   try {
     const u = new URL(url);
     if (u.hostname.includes('start.gg') && u.pathname.includes('/tournament/')) {
-        const parts = u.pathname.split('/');
-        const index = parts.indexOf('tournament');
-        if (index !== -1 && parts[index + 1]) {
-            return parts[index + 1];
-        }
+      const parts = u.pathname.split('/');
+      const index = parts.indexOf('tournament');
+      if (index !== -1 && parts[index + 1]) {
+        return parts[index + 1];
+      }
     }
     return null;
   } catch (e) {
